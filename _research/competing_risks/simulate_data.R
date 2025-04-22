@@ -55,34 +55,8 @@ simulate_data <- function(n, prob_A = NULL) {
            M3 = ifelse(Y3 == 1, 0, M3))
 }
 
-vars <- lcmmtp_variables$new(
-    L = list(c("L1"), c("L2"), c("L3")),
-    A = c("A1", "A2", "A3"),
-    Z = list(NULL, NULL, NULL),
-    M = c("M1", "M2", "M3"),
-    Y = c("Y2", "Y3", "Y4"),
-    D = c("D2", "D3", "D4")
-)
-
-vars <- lcmmtp_variables$new(
-    L = list(c("L1"), c("L2")),
-    A = c("A1", "A2"),
-    Z = list(NULL, NULL),
-    M = c("M1", "M2"),
-    Y = c("Y2", "Y3"),
-    D = c("D2", "D3")
-)
-
-vars <- lcmmtp_variables$new(
-    L = list(c("L1")),
-    A = c("A1"),
-    Z = list(NULL),
-    M = c("M1"),
-    Y = c("Y2"),
-    D = c("D2")
-)
-
-simulated_data <- simulate_data(1e3)
+set.seed(56423)
+simulated_data <- simulate_data(1e4)
 
 lcmmtp(simulated_data,
        c("A1", "A2", "A3"),
@@ -93,7 +67,7 @@ lcmmtp(simulated_data,
        list(c("L1"), c("L2"), c("L3")),
        list(NULL, NULL, NULL),
        NULL,
-       function(data, trt) rep(1, length(data[[trt]])),
-       function(data, trt) rep(1, length(data[[trt]])),
+       function(data, trt) rep(0, length(data[[trt]])),
+       function(data, trt) rep(0, length(data[[trt]])),
        id = NULL,
        control = .lcmmtp_control(folds = 1))

@@ -36,8 +36,8 @@ EstimationTask <- R6::R6Class(
             self$outcomeType <- private$getOutcomeType()
 
             # Create alternative data-sets with treatment modified according to shift functions
-            self$shiftedUnderAPrime <- self$shiftTreatment(self$data, self$vars$treatment, self$vars$censoring, d_prime)
-            self$shiftedUnderAStar <- self$shiftTreatment(self$data, self$vars$treatment, self$vars$censoring, d_star)
+            self$shiftedUnderAPrime <- self$shiftTreatment(self$data, self$variables$treatment, self$variables$censoring, d_prime)
+            self$shiftedUnderAStar <- self$shiftTreatment(self$data, self$variables$treatment, self$variables$censoring, d_star)
         },
 
         # Create augmented data for pooled regressions

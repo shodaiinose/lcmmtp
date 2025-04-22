@@ -1,25 +1,26 @@
-# R6 class for an lcm_Folds object
-lcmmtp_folds <- R6::R6Class(
-    "lcm_folds",
+CrossFitFolds <- R6::R6Class(
+    "CrossFitFolds",
     cloneable = FALSE,
     public = list(
         folds = NULL,
-        V = NULL,
-        initialize = function(n, V, cluster_ids = NULL) {
-            self$folds <- origami::make_folds(n, V = V, cluster_ids = cluster_ids)
+        numberFolds = NULL,
+        initialize = function(n, numberFolds, clusterIds = NULL) {
+            self$folds <- origami::make_folds(n, V = numberFolds, cluster_ids = clusterIds)
 
-            if (V == 1) {
+            if (numberFolds == 1) {
                 self$folds[[1]]$training_set <- self$folds[[1]]$validation_set
             }
 
-            self$V <- V
+            self$numberFolds <- numberFolds
         },
+
         # Get training data from a given fold index
-        Tr = function(data, index) {
+        training = function(data, index) {
             data[data$`lcmmtp_row_index` %in% self$folds[[index]]$training_set, ]
         },
+
         # Get validation data from a given fold index
-        P = function(data, index) {
+        validation = function(data, index) {
             data[data$`lcmmtp_row_index` %in% self$folds[[index]]$validation_set, ]
         }
     )

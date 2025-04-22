@@ -4,7 +4,7 @@
 \alias{lcmmtp}
 \title{Causal Mediation with Longitudinal Data Using Modified Treatment Policies}
 \usage{
-lcmmtp(data, vars, d_prime, d_star, control = .lcmmtp_control())
+lcmmtp(data, vars, d_prime, d_star, id = NULL, control = .lcmmtp_control())
 }
 \arguments{
 \item{data}{A data frame containing all necessary variables}
@@ -33,5 +33,5 @@ vars <- lcmmtp_variables$new(
 d_ap <- function(data, trt) rep(1, length(data[[trt]]))
 d_as <- function(data, trt) rep(0, length(data[[trt]]))
 
-lcmmtp(lcmmtp_foo, vars, d_ap, d_as, .lcmmtp_control(folds = 5))
+lcmmtp(lcmmtp_foo, vars, d_ap, d_as, control = .lcmmtp_control(folds = 5))
 }

@@ -10,10 +10,11 @@ lcmmtp_variables <- R6::R6Class(
         M = NULL,
         Z = NULL,
         Y = NULL,
+        D = NULL,
         risk = NULL,
         cens = NULL,
         tau = NULL,
-        initialize = function(W, L, A, Z, M, Y, cens) {
+        initialize = function(W, L, A, Z, M, Y, cens = NULL, D = NULL) {
             checkmate::assertCharacter(A)
             checkmate::assertCharacter(Y)
 
@@ -30,18 +31,17 @@ lcmmtp_variables <- R6::R6Class(
                 self$W <- W
             }
 
-            if (!missing(cens)) {
-                checkmate::assertCharacter(cens, len = self$tau)
-                self$cens <- cens
-            }
-
+            checkmate::assertCharacter(cens, len = self$tau, null.ok = TRUE)
+            checkmate::assertCharacter(D, len = self$tau, null.ok = TRUE)
             checkmate::assertCharacter(M, len = self$tau)
             checkmate::assertList(L, types = "character", len = self$tau)
             checkmate::assertList(Z, types = c("character", "null"), len = self$tau)
 
+            self$cens <- cens
             self$L <- L
             self$Z <- Z
             self$M <- M
+            self$D <- D
 
             invisible(self)
         },
@@ -58,18 +58,21 @@ lcmmtp_variables <- R6::R6Class(
         },
         #' Return the names of all variables
         all_vars = function() {
-            c(self$W, unlist(self$L), self$A, unlist(self$Z), self$M, self$risk, self$cens, self$Y)
+            c(self$W, unlist(self$L), self$A, unlist(self$Z), self$M, self$risk, self$cens, self$D, self$Y)
         }
     ),
     private = list(
         parents_L = function(t) {
-            if (t == 1) {
+            if (t <= 1) {
                 return(self$W)
             }
             c(private$parents_M(t - 1), self$M[t - 1])
         },
         parents_A = function(t) {
-            c(private$parents_L(t), unlist(self$L[[t]]))
+            if (t >= 1) {
+                return(c(private$parents_L(t), unlist(self$L[[t]])))
+            }
+            private$parents_L(t)
         },
         parents_Z = function(t) {
             c(private$parents_A(t), self$A[t])

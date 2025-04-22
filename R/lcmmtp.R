@@ -23,7 +23,7 @@
 #' d_ap <- function(data, trt) rep(1, length(data[[trt]]))
 #' d_as <- function(data, trt) rep(0, length(data[[trt]]))
 #'
-#' lcmmtp(lcmmtp_foo, vars, d_ap, d_as, .lcmmtp_control(folds = 5))
+#' lcmmtp(lcmmtp_foo, vars, d_ap, d_as, control = .lcmmtp_control(folds = 5))
 lcmmtp <- function(data, vars, d_prime, d_star, id = NULL, control = .lcmmtp_control()) {
     checkmate::assertDataFrame(data[, vars$all_vars()])
     checkmate::assertR6(vars, "lcmmtp_variables")
@@ -57,6 +57,7 @@ lcmmtp <- function(data, vars, d_prime, d_star, id = NULL, control = .lcmmtp_con
         dat <- merge(task$augmented, bar_m)
         theta <- mean(vapply(comp, function(x) x$theta_v, FUN.VALUE = 1))
         lambda <- mean(vapply(comp, function(x) x$lambda_v, FUN.VALUE = 1))
+
         S <- (dat$lcmmtp_D_Z1 - theta) * lambda + (dat$lcmmtp_D_M1 - lambda) * theta
 
         return(list(theta = theta, lambda = lambda, S = S))
@@ -72,6 +73,5 @@ lcmmtp <- function(data, vars, d_prime, d_star, id = NULL, control = .lcmmtp_con
         S = as.vector(unlist(S))
     )
 
-    class(ans) <- "lcmmtp"
-    ans
+    ife::ife(ans$theta, as.vector(unlist(S)))
 }

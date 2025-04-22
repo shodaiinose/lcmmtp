@@ -15,9 +15,7 @@ lcmmtp_task <- R6::R6Class(
 
             if (!is.null(vars$risk)) {
                 for (y in c(vars$risk, vars$Y)) {
-                    data.table::set(tmp,
-                                    j = y,
-                                    value = private$convert_to_surv(tmp[[y]]))
+                    data.table::set(tmp, j = y, value = private$convert_to_surv(tmp[[y]]))
                 }
             }
 
@@ -82,16 +80,35 @@ lcmmtp_task <- R6::R6Class(
             }
             data
         },
+
+        at_risk_N = function(data, t) {
+            if (is.null(self$vars$risk)) {
+                return(rep(TRUE, nrow(data)))
+            }
+
+            if (t == 0) {
+                return(rep(TRUE, nrow(data)))
+            }
+
+            data[[self$vars$risk[t]]] == 1 & !is.na(data[[self$vars$risk[t]]])
+        },
+
+        at_risk_D = function(data, t) {
+            if (t <= 0) {
+                return(rep(TRUE, nrow(data)))
+            }
+
+            if (is.null(self$vars$D)) {
+                D <- rep(0, nrow(data))
+            } else {
+                D <- data[[self$vars$D[t]]]
+            }
+
+            D == 0
+        },
+
         at_risk = function(data, t) {
-            if (is.null(vars$risk)) {
-                return(rep(TRUE, nrow(data)))
-            }
-
-            if (t == 1) {
-                return(rep(TRUE, nrow(data)))
-            }
-
-            data[[vars$risk[t - 1]]] == 1 & !is.na(data[[vars$risk[t - 1]]])
+            self$at_risk_N(data, t) & self$at_risk_D(data, t)
         },
         observed = function(data, t, lag = FALSE) {
             if (is.null(self$vars$cens)) {

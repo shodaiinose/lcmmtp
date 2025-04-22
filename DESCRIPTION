@@ -22,13 +22,14 @@ Imports:
     checkmate,
     data.table,
     glue,
-    mlr3superlearner (>= 0.1.3),
+    ife,
+    mlr3superlearner,
     origami,
     R6,
     slider
 URL: https://github.com/nt-williams/lcmmtp
 BugReports: https://github.com/nt-williams/lcmmtp/issues
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

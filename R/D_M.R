@@ -10,14 +10,13 @@ D_Mt <- function(P_a, t, tau, M) {
                     P_a[, g("lcmmtp_med_{t:(s-1)}"), drop = FALSE] == P_a[, M[t:(s - 1)], drop = FALSE]
                     , 1, prod
                 )
+                y_1[is.na(y_1)] <- 0
             }
 
-            y_2 <- (as.numeric(P_a[[g("lcmmtp_med_{s}")]] == P_a[[M[s]]]) *
-                        P_a[[g("lcmmtp_Q_M{s+1}")]]) -
-                P_a[[g("lcmmtp_Q_M{s}")]]
+            obs_M <- as.numeric(P_a[[g("lcmmtp_med_{s}")]] == P_a[[M[s]]])
+            obs_M[is.na(obs_M)] <- 0
 
-            y_1[is.na(y_1)] <- -999
-            y_2[is.na(y_2)] <- -999
+            y_2 <- (obs_M * P_a[[g("lcmmtp_Q_M{s+1}")]]) - P_a[[g("lcmmtp_Q_M{s}")]]
 
             w <- `K*_t,s`
             # w <- pmin(w, quantile(w, 0.99))

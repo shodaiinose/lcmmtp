@@ -29,14 +29,21 @@ lcmmtp <- function(data,
     folds <- CrossFitFolds$new(nrow(data), control$folds, id)
 
     for (time in variables$timeHorizon:1) {
+        # Estimate outcome regression
         OutcomeRegression(task, time, folds, control)
+        # Estimate Riesz Representers
         CrossFitDensityRatios(task, time, folds, control)
+        # DR transformation of outcome regression
         task$augmented[[g("lcmmtp_D_L{time}")]] <- D_Lt(task$augmented, time, variables$timeHorizon)
 
+        # Integrate out the mediator-outcome confounder through regression
         MarginalizeMediatorOutcomeConfounder(task, time, folds, d_prime, control)
+        # DR transformation of the mediator-outcome confounder regression
         task$augmented[[g("lcmmtp_D_Z{time}")]] <- D_Zt(task$augmented, time, variables$timeHorizon)
 
+        # Estimate mediator regression
         MediatorRegression(task, time, folds, d_star, control)
+        # DR transformation of the conditional mediator expectation
         task$augmented[[g("lcmmtp_D_M{time}")]] <- D_Mt(task$augmented, time, variables$timeHorizon, variables$mediator)
     }
 

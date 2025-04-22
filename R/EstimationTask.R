@@ -8,7 +8,7 @@ EstimationTask <- R6::R6Class(
         shiftedUnderAStar = NULL,
         variables = NULL,
         n = NULL,
-        type = NULL,
+        outcomeType = NULL,
         initialize = function(data, variables, id = NULL, d_prime, d_star) {
             dataCopy <- data.table::copy(data)
 
@@ -33,15 +33,15 @@ EstimationTask <- R6::R6Class(
             self$augmented <- self$data
             self$variables <- variables$clone()
             self$n <- nrow(self$data)
-            self$outcomeType <- private$outcomeType()
+            self$outcomeType <- private$getOutcomeType()
 
             # Create alternative data-sets with treatment modified according to shift functions
             self$shiftedUnderAPrime <- self$shiftTreatment(self$data, self$vars$treatment, self$vars$censoring, d_prime)
-            self$shiftedUnderAPrime <- self$shiftTreatment(self$data, self$vars$treatment, self$vars$censoring, d_star)
+            self$shiftedUnderAStar <- self$shiftTreatment(self$data, self$vars$treatment, self$vars$censoring, d_star)
         },
 
         # Create augmented data for pooled regressions
-        augmentData = function(data, time) {
+        augment = function(data, time) {
             uniqueMediatorValues <- self$uniqueMediatorValues()
             k <- length(uniqueMediatorValues)
 
@@ -49,14 +49,14 @@ EstimationTask <- R6::R6Class(
                 lapply(expand.grid(uniqueMediatorValues), rep, nrow(data))
             )
 
-            names(m_underbar) <- g("lcmmtp_med_{t}")
+            names(m_underbar) <- g("lcmmtp_med_{time}")
             augmented <- data.table::as.data.table(lapply(data, rep, rep(k, nrow(data))))
             cbind(augmented, m_underbar)
         },
 
         # All unique values of the mediator
         uniqueMediatorValues = function() {
-            M <- self$data[, self$vars$mediator, drop = FALSE]
+            M <- self$data[, self$variables$mediator, drop = FALSE]
             unique(as.vector(as.matrix(M[complete.cases(M), ])))
         },
 
@@ -113,7 +113,7 @@ EstimationTask <- R6::R6Class(
                 return(rep(TRUE, nrow(data)))
             }
 
-            if (is.null(self$variables$competingRisk)) {
+            if (is.null(self$variables$competingRisks)) {
                 competingRisk <- rep(0, nrow(data))
             } else {
                 competingRisk <- data[[self$variables$competingRisks[time]]]
@@ -144,8 +144,8 @@ EstimationTask <- R6::R6Class(
     ),
     private = list(
         # Derive outcome type, i.e., binary or continuous
-        outcomeType = function() {
-            y <- self$data[[self$vars$outcome]]
+        getOutcomeType = function() {
+            y <- self$data[[self$variables$outcome]]
             assertNumeric(y)
             if (all(y == 1 | y == 0, na.rm = T)) return("binomial")
             "continuous"

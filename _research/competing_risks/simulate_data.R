@@ -84,6 +84,16 @@ vars <- lcmmtp_variables$new(
 
 simulated_data <- simulate_data(1e4)
 
-d_ap <- function(data, trt) rep(0, length(data[[trt]]))
-d_as <- function(data, trt) rep(0, length(data[[trt]]))
-lcmmtp(simulated_data, vars, d_ap, d_as, control = .lcmmtp_control(folds = 1))
+lcmmtp(data,
+       c("A1", "A2", "A3"),
+       c("Y2", "Y3", "Y4"),
+       c("M1", "M2", "M3"),
+       c("D2", "D3", "D4"),
+       NULL,
+       list(c("L1"), c("L2"), c("L3")),
+       list(NULL, NULL, NULL),
+       NULL,
+       function(data, trt) rep(0, length(data[[trt]])),
+       function(data, trt) rep(0, length(data[[trt]])),
+       id = NULL,
+       control = .lcmmtp_control(folds = 1))

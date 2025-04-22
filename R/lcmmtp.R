@@ -1,56 +1,55 @@
-#' Causal Mediation with Longitudinal Data Using Modified Treatment Policies
-#'
-#' @param data A data frame containing all necessary variables
-#' @param vars An `lcmmtp_variables` object mapping observed variables to
-#'  the assumed variable structure.
-#' @param d_prime
-#' @param d_star
-#' @param control
-#'
-#' @return An object of class `lcmmtp`
-#' @export
-#'
-#' @examples
-#' vars <- lcmmtp_variables$new(
-#'     L = list(c("L_1"), c("L_2")),
-#'     A = c("A_1", "A_2"),
-#'     Z = list(c("Z_1"), c("Z_2")),
-#'     M = c("M_1", "M_2"),
-#'     Y = "Y",
-#'     cens = c("c1", "c2")
-#' )
-#'
-#' d_ap <- function(data, trt) rep(1, length(data[[trt]]))
-#' d_as <- function(data, trt) rep(0, length(data[[trt]]))
-#'
-#' lcmmtp(lcmmtp_foo, vars, d_ap, d_as, control = .lcmmtp_control(folds = 5))
-lcmmtp <- function(data, vars, d_prime, d_star, id = NULL, control = .lcmmtp_control()) {
-    checkmate::assertDataFrame(data[, vars$all_vars()])
-    checkmate::assertR6(vars, "lcmmtp_variables")
-    checkmate::assertNumber(control$folds, lower = 1, upper = nrow(data) - 1)
-    checkmate::assertFunction(d_prime, nargs = 2)
-    checkmate::assertFunction(d_star, nargs = 2)
+lcmmtp <- function(data,
+                   treatment,
+                   outcome,
+                   mediator,
+                   competingRisks,
+                   baselineConfounders,
+                   timeVaryConfounders,
+                   mediatorOutcomeConfounders,
+                   censoring,
+                   d_prime, d_star,
+                   id = NULL,
+                   control = .lcmmtp_control()) {
+    # Create variables object
+    variables <- Variables$new(
+        baselineConfounders = baselineConfounders,
+        timeVaryConfounders = timeVaryConfounders,
+        treatment = treatment,
+        mediatorOutcomeConfounders = mediatorOutcomeConfounders,
+        mediator = mediator,
+        outcome = outcome,
+        competingRisks = competingRisks,
+        censoring = censoring
+    )
 
-    require("mlr3superlearner")
+    # Create a task object
+    task <- EstimationTask$new(data, variables, id, d_prime, d_star)
 
-    task <- lcmmtp_task$new(data, vars, id, d_prime, d_star)
-    Folds <- lcmmtp_folds$new(nrow(data), control$folds, id)
+    # Create a folds object
+    folds <- CrossFitFolds$new(nrow(data), control$folds, id)
 
-    for (t in vars$tau:1) {
-        CrossFit_D_Lt(task, t, Folds, control)
-        CrossFit_D_Zt_Mt(task, d_prime, d_star, t, Folds, control)
+    for (time in variables$timeHorizon:1) {
+        OutcomeRegression(task, time, folds, control)
+        CrossFitDensityRatios(task, time, folds, control)
+        task$augmented[[g("lcmmtp_D_L{time}")]] <- D_Lt(task$augmented, time, variables$timeHorizon)
+
+        MarginalizeMediatorOutcomeConfounder(task, time, folds, d_prime, control)
+        task$augmented[[g("lcmmtp_D_Z{time}")]] <- D_Zt(task$augmented, time, variables$timeHorizon)
+
+        MediatorRegression(task, time, folds, d_star, control)
+        task$augmented[[g("lcmmtp_D_M{time}")]] <- D_Mt(task$augmented, time, variables$timeHorizon, variables$mediator)
     }
 
-    bar_M <- expand.grid(lapply(1:vars$tau, function(t) task$unique_M()))
-    names(bar_M) <- g("lcmmtp_med_{1:vars$tau}")
+    bar_M <- expand.grid(lapply(1:variables$timeHorizon, function(t) task$uniqueMediatorValues()))
+    names(bar_M) <- g("lcmmtp_med_{1:variables$timeHorizon}")
     data.table::setDT(bar_M)
 
     nuis <- slider::slide(bar_M, function(bar_m) {
-        comp <- lapply(1:Folds$V, function(v) {
-            P_v <- Folds$P(data.table::merge.data.table(bar_m, task$augmented, all.x = TRUE), v)
+        comp <- lapply(1:folds$numberFolds, function(v) {
+            validation <- folds$validation(data.table::merge.data.table(bar_m, task$augmented, all.x = TRUE), v)
             list(
-                lambda_v = mean(P_v[["lcmmtp_D_M1"]]),
-                theta_v = mean(P_v[["lcmmtp_D_Z1"]])
+                lambda_v = mean(validation[["lcmmtp_D_M1"]]),
+                theta_v = mean(validation[["lcmmtp_D_Z1"]])
             )
         })
 

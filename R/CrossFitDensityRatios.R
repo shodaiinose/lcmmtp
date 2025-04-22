@@ -1,8 +1,8 @@
 CrossFitDensityRatios <- function(task, time, folds, control) {
     predictions <- list()
     for (v in 1:folds$numberFolds) {
-        # Create validation subset from folds
-        validation <- folds$validation(task$data, v)
+        # Create augmented validation subset from folds
+        validation <- folds$validation(task$augmented, v)
 
         # Create pre-allocated vectors to store predictions
         predictionsMediator <- predictionsAStar <- predictionsAPrime <- predictionsCensoring <- vector("numeric", nrow(validation))
@@ -28,7 +28,7 @@ CrossFitDensityRatios <- function(task, time, folds, control) {
         predictionsAPrime[atRisk & observedValidation] <-
             CrossFit(
             stackedData,
-            P_a[outcomeFreeValidation & competingRiskFreeValidation & observedValidation, ],
+            validation[atRisk & observedValidation, ],
             "lcmmtp_stack_indicator",
             c(task$variables$history("A", time), task$variables$treatment[time]),
             "binomial",
@@ -55,15 +55,18 @@ CrossFitDensityRatios <- function(task, time, folds, control) {
             )
 
         # Create pooled data for predicting M=m
-        augmentedData <- task$augment(folds$training(task$data, v), time)
+        augmentedData <- folds$training(task$augmented, v)
 
         # Create indicators for the subset of observations to use for training
         outcomeFree <- task$outcomeFree(augmentedData, time-1)
         competingRiskFree <- task$competingRiskFree(augmentedData, time-1)
         observed <- task$observed(augmentedData, time, TRUE)
 
+        # Subset data
+        augmentedData <- augmentedData[outcomeFree & competingRiskFree & observed, ]
+
         # Create pseudo-outcome for training
-        augmentedData[["lcmmtp_pseudo_m_fit"]] <- as.numeric(augmentedData[[g("lcmmtp_med_{t}")]] == augmentedData[[task$variables$mediator[time]]])
+        augmentedData[["lcmmtp_pseudo_m_fit"]] <- as.numeric(augmentedData[[g("lcmmtp_med_{time}")]] == augmentedData[[task$variables$mediator[time]]])
 
         # Estimate the probability M=m
         predictionsMediator[atRisk & observedValidation] <-
@@ -71,7 +74,7 @@ CrossFitDensityRatios <- function(task, time, folds, control) {
             augmentedData,
             validation[atRisk & observedValidation, ],
             "lcmmtp_pseudo_m_fit",
-            c(task$variables$history("M", time), g("lcmmtp_med_{t}")),
+            c(task$variables$history("M", time), g("lcmmtp_med_{time}")),
             "binomial",
             control$learners_mediator,
             control$folds_mediator
@@ -81,15 +84,17 @@ CrossFitDensityRatios <- function(task, time, folds, control) {
         observedValidation <- task$observed(validation, time)
 
         # Create density ratios
-        validation[[g("lcmmtp_Gp_A{t}")]] <- density_ratios(predictionsAPrime, atRisk, observedValidation)
-        validation[[g("lcmmtp_Gs_A{t}")]] <- density_ratios(predictionsAStar, atRisk, observedValidation)
-        validation[[g("lcmmtp_G_M{t}")]] <- G(P_a[[task$variables$mediator[time]]], predictionsMediator, validation[[g("lcmmtp_med_{t}")]], atRisk, observed)
+        validation[[g("lcmmtp_Gp_A{time}")]] <- density_ratios(predictionsAPrime, atRisk, observedValidation)
+        validation[[g("lcmmtp_Gs_A{time}")]] <- density_ratios(predictionsAStar, atRisk, observedValidation)
+        validation[[g("lcmmtp_G_M{time}")]] <-
+            G(validation[[task$variables$mediator[time]]], predictionsMediator, validation[[g("lcmmtp_med_{time}")]], atRisk, observedValidation)
 
         predictions[[v]] <- validation
     }
 
     predictions <- Reduce(rbind, predictions)
     data.table::setorder(predictions, "lcmmtp_ID")
-
     task$augmented <- predictions
+
+    return(invisible())
 }

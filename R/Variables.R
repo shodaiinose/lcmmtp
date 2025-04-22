@@ -6,14 +6,14 @@ Variables <- R6::R6Class(
         timeVaryConfounders = NULL,
         treatment = NULL,
         mediator = NULL,
-        mediatorOutcomeCounfounders = NULL,
+        mediatorOutcomeConfounders = NULL,
         outcome = NULL,
         competingRisks = NULL,
         risk = NULL,
         censoring = NULL,
         timeHorizon = NULL,
         initialize = function(baselineConfounders, timeVaryConfounders, treatment,
-                              mediatorOutcomeCounfounders, mediator, outcome, censoring, competingRisks) {
+                              mediatorOutcomeConfounders, mediator, outcome, censoring, competingRisks) {
             assertCharacter(treatment)
             assertCharacter(outcome)
 
@@ -27,22 +27,19 @@ Variables <- R6::R6Class(
 
             self$timeHorizon <- private$findTimeHorizon()
 
-            if (!missing(baselineConfounders)) {
-                assertCharacter(baselineConfounders)
-                self$baselineConfounders <- baselineConfounders
-            }
-
+            assertCharacter(baselineConfounders, null.ok = TRUE)
             assertCharacter(censoring, len = self$timeHorizon, null.ok = TRUE)
             assertCharacter(competingRisks, len = self$timeHorizon, null.ok = TRUE)
             assertCharacter(mediator, len = self$timeHorizon)
             assertList(timeVaryConfounders, types = "character", len = self$timeHorizon)
-            assertList(mediatorOutcomeCounfounders, types = c("character", "null"), len = self$timeHorizon)
+            assertList(mediatorOutcomeConfounders, types = c("character", "null"), len = self$timeHorizon)
 
+            self$baselineConfounders <- baselineConfounders
             self$censoring <- censoring
             self$timeVaryConfounders <- timeVaryConfounders
             self$mediatorOutcomeConfounders <- mediatorOutcomeConfounders
             self$mediator <- mediator
-            self$competingRisks <- cometingRisks
+            self$competingRisks <- competingRisks
 
             invisible(self)
         },
@@ -74,9 +71,9 @@ Variables <- R6::R6Class(
 
         parentsTreatment = function(time) {
             if (time >= 1) {
-                return(c(private$parentsTimeVary(time), unlist(self$timeVaryConfounders[[t]])))
+                return(c(private$parentsTimeVary(time), unlist(self$timeVaryConfounders[[time]])))
             }
-            private$parentsTimeVary(t)
+            private$parentsTimeVary(time)
         },
 
         parentsMediatorOutcomeConfounders = function(time) {

@@ -1,3 +1,4 @@
+#' @importFrom checkmate assertCharacter assertList assertNumeric assertFunction assertSubset assertLogical
 #' @keywords internal
 "_PACKAGE"
 

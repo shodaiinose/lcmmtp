@@ -14,7 +14,7 @@ EstimationTask <- R6::R6Class(
 
             # If a survival outcome, flip indicators
             if (!is.null(variables$risk)) {
-                for (y in c(vars$risk, vars$outcome)) {
+                for (y in c(variables$risk, variables$outcome)) {
                     data.table::set(dataCopy, j = y, value = private$flipSurvivalIndicators(dataCopy[[y]]))
                 }
             }

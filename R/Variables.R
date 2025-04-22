@@ -48,20 +48,20 @@ Variables <- R6::R6Class(
         },
 
         # Get all parent nodes for a variable
-        history = function(var = c("L", "A", "Z", "M", "Y"), t) {
+        history = function(var = c("L", "A", "Z", "M", "Y"), time) {
             switch(
                 match.arg(var),
-                L = private$parents_L(t),
-                A = private$parents_A(t),
-                Z = private$parents_Z(t),
-                M = private$parents_M(t),
-                Y = private$parents_Y()
+                L = private$parentsTimeVary(time),
+                A = private$parentsTreatment(time),
+                Z = private$parentsMediatorOutcomeConfounders(time),
+                M = private$parentsMediator(time),
+                Y = private$parentsOutcome()
             )
         },
 
         # Return the names of all variables
         allVariables = function() {
-            c(self$W, unlist(self$L), self$A, unlist(self$Z), self$M, self$risk, self$cens, self$D, self$Y)
+            c(self$baseline, unlist(self$timeVaryConfounders), self$treatment, unlist(self$mediatorOutcomeConfounders), self$mediator, self$risk, self$censoring, self$competingRisks, self$outcome)
         }
     ),
     private = list(

@@ -1,3 +1,23 @@
+#' Title
+#'
+#' @param data
+#' @param treatment
+#' @param outcome
+#' @param mediator
+#' @param competingRisks
+#' @param baselineConfounders
+#' @param timeVaryConfounders
+#' @param mediatorOutcomeConfounders
+#' @param censoring
+#' @param d_prime
+#' @param d_star
+#' @param id
+#' @param control
+#'
+#' @returns
+#' @export
+#'
+#' @examples
 lcmmtp <- function(data,
                    treatment,
                    outcome,
@@ -10,6 +30,7 @@ lcmmtp <- function(data,
                    d_prime, d_star,
                    id = NULL,
                    control = .lcmmtp_control()) {
+
     # Create variables object
     variables <- Variables$new(
         baselineConfounders = baselineConfounders,

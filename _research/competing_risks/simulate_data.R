@@ -1,5 +1,6 @@
 library(simcausal)
 library(dplyr)
+library(purrr)
 
 simulate_data <- function(n, prob_A = NULL) {
     dag <-
@@ -55,19 +56,24 @@ simulate_data <- function(n, prob_A = NULL) {
            M3 = ifelse(Y3 == 1, 0, M3))
 }
 
-set.seed(56423)
-simulated_data <- simulate_data(1e4)
+res <- map(1:500, function(i) {
+    set.seed(i)
+    simulated_data <- simulate_data(1e3)
+    lcmmtp(simulated_data,
+           c("A1", "A2", "A3"),
+           c("Y2", "Y3", "Y4"),
+           c("M1", "M2", "M3"),
+           c("D2", "D3", "D4"),
+           NULL,
+           list(c("L1"), c("L2"), c("L3")),
+           list(NULL, NULL, NULL),
+           NULL,
+           function(data, trt) rep(1, length(data[[trt]])),
+           function(data, trt) rep(1, length(data[[trt]])),
+           id = NULL,
+           control = .lcmmtp_control(folds = 1)) |>
+        ife::tidy()
+    }
+) |>
+    list_rbind()
 
-lcmmtp(simulated_data,
-       c("A1", "A2", "A3"),
-       c("Y2", "Y3", "Y4"),
-       c("M1", "M2", "M3"),
-       c("D2", "D3", "D4"),
-       NULL,
-       list(c("L1"), c("L2"), c("L3")),
-       list(NULL, NULL, NULL),
-       NULL,
-       function(data, trt) rep(0, length(data[[trt]])),
-       function(data, trt) rep(0, length(data[[trt]])),
-       id = NULL,
-       control = .lcmmtp_control(folds = 1))

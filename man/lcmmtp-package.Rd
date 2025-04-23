@@ -2,7 +2,6 @@
 % Please edit documentation in R/lcmmtp-package.R
 \docType{package}
 \name{lcmmtp-package}
-\alias{lcmmtp}
 \alias{lcmmtp-package}
 \title{lcmmtp: Nonparametric Longitudinal Causal Mediation Using Modified Treatment Policies}
 \description{

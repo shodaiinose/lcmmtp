@@ -36,7 +36,7 @@ lcmmtp_variables <- R6::R6Class(
             }
 
             checkmate::assertCharacter(M, len = self$tau)
-            checkmate::assertList(L, types = "character", len = self$tau)
+            checkmate::assertList(L, types = c("character", "null"), len = self$tau)
             checkmate::assertList(Z, types = c("character", "null"), len = self$tau)
 
             self$L <- L

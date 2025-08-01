@@ -1,4 +1,4 @@
-Package: lcmmtp
+Package: lcmmtptrunc
 Type: Package
 Title: Nonparametric Longitudinal Causal Mediation Using Modified Treatment Policies
 Version: 0.1.0

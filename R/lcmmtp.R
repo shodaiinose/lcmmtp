@@ -49,12 +49,18 @@ lcmmtp <- function(data,
     # Create a folds object
     folds <- CrossFitFolds$new(nrow(data), control$folds, id)
 
+    untruncated_G_M <- list()
+
     for (time in variables$timeHorizon:1) {
         # Estimate outcome regression
         OutcomeRegression(task, time, folds, control)
         # Estimate Riesz Representers
         CrossFitDensityRatios(task, time, folds, control)
         # DR transformation of outcome regression
+
+        untruncated_G_M[[time]] <- task$augmented[[paste0("lcmmtp_G_M", time)]]
+        task$augmented[[paste0("lcmmtp_G_M", time)]] <- pmin(untruncated_G_M[[time]], quantile(untruncated_G_M[[time]], 0.975)) # truncate at 97.5th percentile
+
         task$augmented[[g("lcmmtp_D_L{time}")]] <- D_Lt(task$augmented, time, variables$timeHorizon)
 
         # Integrate out the mediator-outcome confounder through regression
@@ -101,5 +107,7 @@ lcmmtp <- function(data,
     )
 
     list(estimate = ife::ife(ans$theta, as.vector(unlist(S))),
-         augmented = task$augmented)
+         augmented = task$augmented,
+         untruncated_G_M = untruncated_G_M)
 }
+
